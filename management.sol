@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+// All-or-Nothing Crowdfunding
 contract CrowdfundingManagement {
     mapping(address => CrowdfundingProject) public projects;
 
@@ -23,7 +24,6 @@ contract CrowdfundingManagement {
             projectName,
             projectDescription,
             address(msg.sender),
-            address(this),
             goal,
             _labels,
             _values,
@@ -32,23 +32,18 @@ contract CrowdfundingManagement {
 
         projects[address(msg.sender)] = crowd;
     }
-
-    function deleteProject() public view {
-        CrowdfundingProject project = projects[address(msg.sender)];
-
-        require(address(project) != address(0), "Project does not exist");
-    }
 }
 
 contract CrowdfundingProject {
     string public name;
     string public description;
     address public owner;
-    address payable public manager;
     uint public goal;
     uint public balance;
     uint public deadline;
     mapping(uint => string) public pledges;
+
+    bool public isFinalized = false;
 
     struct Contribution {
         uint value;
@@ -62,7 +57,6 @@ contract CrowdfundingProject {
         string memory _name,
         string memory _description,
         address _owner,
-        address _manager,
         uint _goal,
         string[] memory _labels,
         uint[] memory _values,
@@ -71,7 +65,6 @@ contract CrowdfundingProject {
         name = _name;
         description = _description;
         owner = _owner;
-        manager = _manager;
         goal = _goal;
         deadline = _deadline;
 
@@ -85,36 +78,47 @@ contract CrowdfundingProject {
         _;
     }
 
-    function destruct() public payable {
-        require(msg.sender == manager, "Only manager can destruct!");
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Restricted to owner!");
+        _;
+    }
 
-        bool deadlinePassed = block.timestamp >= deadline;
-
-        if (deadlinePassed) {
-            selfdestruct(payable(manager));
-            return;
-        }
-        
+    function refundContributors() private {
         for (uint256 index = 0; index < contributions.length; index++) {
-            Contribution contribution = contributions[index];
-            if (contribution.value > 0) {
-                (bool success, ) = payable(contribution.contributor).call{value: contribution.value}("");
+            if (contributions[index].value > 0) {
+                (bool success, ) = payable(contributions[index].contributor)
+                    .call{value: contributions[index].value}("");
                 require(success, "Refund failed");
             }
         }
+    }
 
-        selfdestruct(payable(owner));
+    function complete() public {
+        bool deadlineReached = block.timestamp >= deadline;
+
+        require(!deadlineReached, "Deadline not reached yet");
+        require(!isFinalized, "Project already finalized");
+
+        isFinalized = true;
+
+        if (goal > balance) {
+            refundContributors();
+            return;
+        }
+
+        payable(owner).transfer(address(this).balance);
     }
 
     function contribute(bool isFreeDonation) public payable checkDeadline {
-        require(balance < goal, "Completed campaign!");
+        bool deadlineReached = block.timestamp >= deadline;
+        require(deadlineReached, "Completed campaign!");
         require(msg.value > 0, "Insufficient value");
 
         bool hasPledge = bytes(pledges[msg.value]).length != 0;
 
         if (isFreeDonation) {
             balance += msg.value;
-            return
+            return;
         }
 
         require(
@@ -129,6 +133,5 @@ contract CrowdfundingProject {
                 pledge: pledges[msg.value]
             })
         );
-
     }
 }
