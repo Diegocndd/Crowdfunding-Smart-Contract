@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 // All-or-Nothing Crowdfunding
 contract CrowdfundingManagement {
-    mapping(address => CrowdfundingProject) public projects;
+    mapping(address => CrowdfundingProject[]) public projects;
 
     function createProject(
         string memory projectName,
@@ -18,7 +18,7 @@ contract CrowdfundingManagement {
             _labels.length == _values.length,
             "Mismatched labels and values"
         );
-        require(_labels.length == 0, "Labels must not be empty");
+        require(_labels.length != 0, "Labels must not be empty");
 
         CrowdfundingProject crowd = new CrowdfundingProject(
             projectName,
@@ -30,11 +30,20 @@ contract CrowdfundingManagement {
             deadline
         );
 
-        projects[address(msg.sender)] = crowd;
+        projects[address(msg.sender)].push(crowd);
     }
 }
 
 contract CrowdfundingProject {
+    event ProjectCreated(address indexed owner, uint goal, uint deadline);
+    event ContributionMade(
+        address indexed contributor,
+        uint amount,
+        bool isFreeDonation
+    );
+    event ProjectCompleted(address indexed owner, bool successful);
+    event Refunded(address indexed contributor, uint amount);
+
     string public name;
     string public description;
     address public owner;
@@ -71,16 +80,8 @@ contract CrowdfundingProject {
         for (uint i = 0; i < _values.length; i++) {
             pledges[_values[i]] = _labels[i];
         }
-    }
 
-    modifier checkDeadline() {
-        require(block.timestamp >= deadline, "Deadline passed");
-        _;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Restricted to owner!");
-        _;
+        emit ProjectCreated(owner, goal, deadline);
     }
 
     function refundContributors() private {
@@ -89,6 +90,11 @@ contract CrowdfundingProject {
                 (bool success, ) = payable(contributions[index].contributor)
                     .call{value: contributions[index].value}("");
                 require(success, "Refund failed");
+                balance -= contributions[index].value;
+                emit Refunded(
+                    address(contributions[index].contributor),
+                    contributions[index].value
+                );
             }
         }
     }
@@ -96,28 +102,32 @@ contract CrowdfundingProject {
     function complete() public {
         bool deadlineReached = block.timestamp >= deadline;
 
-        require(!deadlineReached, "Deadline not reached yet");
+        require(deadlineReached, "Deadline not reached yet");
         require(!isFinalized, "Project already finalized");
 
         isFinalized = true;
 
         if (goal > balance) {
             refundContributors();
+            emit ProjectCompleted(owner, false);
             return;
         }
 
+        emit ProjectCompleted(owner, true);
         payable(owner).transfer(address(this).balance);
     }
 
-    function contribute(bool isFreeDonation) public payable checkDeadline {
+    function contribute(bool isFreeDonation) public payable {
         bool deadlineReached = block.timestamp >= deadline;
-        require(deadlineReached, "Completed campaign!");
+
+        require(!deadlineReached, "Completed campaign!");
         require(msg.value > 0, "Insufficient value");
 
         bool hasPledge = bytes(pledges[msg.value]).length != 0;
 
         if (isFreeDonation) {
             balance += msg.value;
+            emit ContributionMade(address(msg.sender), msg.value, true);
             return;
         }
 
@@ -126,6 +136,8 @@ contract CrowdfundingProject {
             "Your value does not fit any of this campaign pledges"
         );
 
+        balance += msg.value;
+
         contributions.push(
             Contribution({
                 value: msg.value,
@@ -133,5 +145,7 @@ contract CrowdfundingProject {
                 pledge: pledges[msg.value]
             })
         );
+
+        emit ContributionMade(address(msg.sender), msg.value, false);
     }
 }
