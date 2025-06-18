@@ -3,7 +3,16 @@ pragma solidity ^0.8.30;
 
 // All-or-Nothing Crowdfunding
 contract CrowdfundingManagement {
-    mapping(address => CrowdfundingProject[]) public projects;
+    event ProjectCreated(
+        address indexed owner,
+        address projectAddress,
+        string name,
+        uint goal,
+        uint deadline
+    );
+
+    CrowdfundingProject[] public projects;
+    uint public counter;
 
     function createProject(
         string memory projectName,
@@ -23,19 +32,26 @@ contract CrowdfundingManagement {
         CrowdfundingProject crowd = new CrowdfundingProject(
             projectName,
             projectDescription,
-            address(msg.sender),
+            msg.sender,
             goal,
             _labels,
             _values,
             deadline
         );
 
-        projects[address(msg.sender)].push(crowd);
+        emit ProjectCreated(
+            msg.sender,
+            address(crowd),
+            projectName,
+            goal,
+            deadline
+        );
+        counter += 1;
+        projects.push(crowd);
     }
 }
 
 contract CrowdfundingProject {
-    event ProjectCreated(address indexed owner, uint goal, uint deadline);
     event ContributionMade(
         address indexed contributor,
         uint amount,
@@ -50,7 +66,13 @@ contract CrowdfundingProject {
     uint public goal;
     uint public balance;
     uint public deadline;
-    mapping(uint => string) public pledges;
+
+    struct Pledge {
+        uint value;
+        string label;
+    }
+
+    Pledge[] public pledges;
 
     bool public isFinalized = false;
 
@@ -78,10 +100,8 @@ contract CrowdfundingProject {
         deadline = _deadline;
 
         for (uint i = 0; i < _values.length; i++) {
-            pledges[_values[i]] = _labels[i];
+            pledges.push(Pledge({value: _values[i], label: _labels[i]}));
         }
-
-        emit ProjectCreated(owner, goal, deadline);
     }
 
     function refundContributors() private {
@@ -123,7 +143,16 @@ contract CrowdfundingProject {
         require(!deadlineReached, "Completed campaign!");
         require(msg.value > 0, "Insufficient value");
 
-        bool hasPledge = bytes(pledges[msg.value]).length != 0;
+        bool hasPledge = false;
+        string memory pledgeLabel = "";
+
+        for (uint i = 0; i < pledges.length; i++) {
+            if (pledges[i].value == msg.value) {
+                hasPledge = true;
+                pledgeLabel = pledges[i].label;
+                break;
+            }
+        }
 
         if (isFreeDonation) {
             balance += msg.value;
@@ -142,7 +171,7 @@ contract CrowdfundingProject {
             Contribution({
                 value: msg.value,
                 contributor: address(msg.sender),
-                pledge: pledges[msg.value]
+                pledge: pledgeLabel
             })
         );
 
