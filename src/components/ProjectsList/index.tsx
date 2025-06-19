@@ -16,8 +16,6 @@ export default function ProjectsList() {
 
   const [projects, setProjects] = useState<any[]>([]);
 
-  const totalProjects = 1;
-
   useEffect(() => {
     if (!contract) return;
 
@@ -25,8 +23,9 @@ export default function ProjectsList() {
       if (!contract) return;
       try {
         const projArray = [];
+        const totalProjects = await contract.methods.counter().call();
 
-        for (let i = 0; i < totalProjects; i++) {
+        for (let i = 0; i < Number(totalProjects); i++) {
           const projectAddress = await contract.methods.projects(i).call();
 
           const projectContract = new web3.eth.Contract(
@@ -75,7 +74,15 @@ export default function ProjectsList() {
             <span className="text-slate-400">
               {reduceString(proj.address, 20)}
             </span>
-            <button className="cursor-pointer">
+            <button
+              onClick={() => {
+                navigator.clipboard
+                  .writeText(proj.address)
+                  .then(() => {})
+                  .catch((err) => {});
+              }}
+              className="cursor-pointer"
+            >
               <IoCopy className="text-slate-700" />
             </button>
           </div>

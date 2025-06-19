@@ -1,5 +1,43 @@
 [
 	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "projectName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "projectDescription",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "goal",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string[]",
+				"name": "_labels",
+				"type": "string[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "_values",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "deadline",
+				"type": "uint256"
+			}
+		],
+		"name": "createProject",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -37,41 +75,16 @@
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "projectName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "projectDescription",
-				"type": "string"
-			},
+		"inputs": [],
+		"name": "counter",
+		"outputs": [
 			{
 				"internalType": "uint256",
-				"name": "goal",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string[]",
-				"name": "_labels",
-				"type": "string[]"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "_values",
-				"type": "uint256[]"
-			},
-			{
-				"internalType": "uint256",
-				"name": "deadline",
+				"name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "createProject",
-		"outputs": [],
-		"stateMutability": "payable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{

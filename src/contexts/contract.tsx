@@ -14,14 +14,14 @@ type ContractContextType = {
 };
 import CrowdfundingManagementABI from "@/ABIs/CrowdfundingManagement.json";
 
-const CONTRACT_ADDRESS = "0x11345C742cBF00C3DE5206cc4d0A9f3E65cc72a6";
+const CONTRACT_ADDRESS = "0x84aDe3C63BA0f64833102C014c4c39a412557c9A";
 
 const ContractContext = createContext<ContractContextType | undefined>(
   undefined
 );
 
 export const ContractProvider = ({ children }: { children: ReactNode }) => {
-  const { web3 } = useWeb3();
+  const { web3, account } = useWeb3();
   const [contract, setContract] = useState<Contract<any> | null>(null);
 
   useEffect(() => {
