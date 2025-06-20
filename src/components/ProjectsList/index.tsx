@@ -6,11 +6,24 @@ import { useWeb3 } from "@/contexts/web3";
 import { getDaysRemaining, getPercentage, reduceString } from "@/utils";
 
 import { useEffect, useState } from "react";
+import { BiSolidDonateHeart } from "react-icons/bi";
 import { IoCopy } from "react-icons/io5";
 import { LuClock } from "react-icons/lu";
 import { RiHandCoinLine } from "react-icons/ri";
 
-export default function ProjectsList() {
+function formatNumber(num: number) {
+  const str = num.toString();
+  if (str.includes("e")) {
+    const fixed = num.toFixed(20);
+    return fixed.replace(/\.?0+$/, "");
+  }
+  return str;
+}
+
+export default function ProjectsList({
+  setSelectedProject,
+  setSupportModal,
+}: any) {
   const { web3 } = useWeb3();
   const { contract } = useContract();
 
@@ -93,7 +106,10 @@ export default function ProjectsList() {
             <div className="flex items-center gap-1 text-slate-600">
               <RiHandCoinLine />
               <span>
-                {getPercentage(Number(proj.balance), Number(proj.goal))}% funded
+                {formatNumber(
+                  getPercentage(Number(proj.balance), Number(proj.goal))
+                )}
+                % funded
               </span>
             </div>
             ·
@@ -101,6 +117,19 @@ export default function ProjectsList() {
               <LuClock />
               <span>{getDaysRemaining(Number(proj.deadline))} days left</span>
             </div>
+          </div>
+
+          <div>
+            <button
+              onClick={() => {
+                setSelectedProject(proj.address);
+                setSupportModal(true);
+              }}
+              className="cursor-pointer bg-slate-800 text-white rounded-md px-5 flex items-center gap-2 py-1 text-sm mt-6"
+            >
+              <BiSolidDonateHeart />
+              <span>Back project</span>
+            </button>
           </div>
         </div>
       ))}

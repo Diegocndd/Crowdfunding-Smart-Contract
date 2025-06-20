@@ -4,8 +4,8 @@ import { useWeb3 } from "@/contexts/web3";
 import { useContract } from "@/contexts/contract";
 import Web3 from "web3";
 import CrowdfundingManagementABI from "@/ABIs/CrowdfundingManagement.json";
+import { FaWallet } from "react-icons/fa";
 
-const CONTRACT_ADDRESS = "0x84aDe3C63BA0f64833102C014c4c39a412557c9A";
 const NewProjectModal = ({
   isOpen,
   onClose,
@@ -13,7 +13,7 @@ const NewProjectModal = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
-  const { web3, account } = useWeb3();
+  const { web3, account, connectWallet } = useWeb3();
   const { contract } = useContract();
 
   const [projectName, setProjectName] = useState("");
@@ -91,7 +91,7 @@ const NewProjectModal = ({
 
       const _contract = new w3.eth.Contract(
         CrowdfundingManagementABI,
-        CONTRACT_ADDRESS
+        process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
       );
 
       const receipt = await _contract.methods
@@ -218,17 +218,29 @@ const NewProjectModal = ({
           />
         </label>
 
-        <button
-          onClick={createNewProject}
-          disabled={loading}
-          className={`mt-4 px-4 py-2 rounded text-white ${
-            loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-        >
-          {loading ? "Creating..." : "Create Project"}
-        </button>
+        {account && (
+          <button
+            onClick={createNewProject}
+            disabled={loading}
+            className={`mt-4 px-4 py-2 rounded text-white ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            {loading ? "Creating..." : "Create Project"}
+          </button>
+        )}
+
+        {!account && (
+          <button
+            onClick={connectWallet}
+            className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded flex items-center gap-2 justify-center cursor-pointer"
+          >
+            <FaWallet />
+            <span>Connect wallet</span>
+          </button>
+        )}
       </div>
     </Modal>
   );

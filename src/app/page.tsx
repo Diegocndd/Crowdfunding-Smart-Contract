@@ -1,7 +1,7 @@
 "use client";
-import ConnectButton from "@/components/ConnectButton";
 import NewProjectModal from "@/components/NewProjectModal";
 import ProjectsList from "@/components/ProjectsList";
+import SupportProjectModal from "@/components/SupportProjectModal";
 import { useContract } from "@/contexts/contract";
 import { useWeb3 } from "@/contexts/web3";
 import { reduceString } from "@/utils";
@@ -12,6 +12,8 @@ export default function Home() {
   const { connectWallet, account } = useWeb3();
   const { contract } = useContract();
 
+  const [selectedProject, setSelectedProject] = useState("");
+  const [supportModal, setSupportModal] = useState(false);
   const [openModal, setOpenModal] = useState(false);
 
   return (
@@ -41,13 +43,23 @@ export default function Home() {
       >
         <FaPlus size={20} />
       </button>
+
       <NewProjectModal isOpen={openModal} onClose={() => setOpenModal(false)} />
 
+      <SupportProjectModal
+        isOpen={supportModal}
+        onClose={() => setSupportModal(false)}
+        contractAddress={selectedProject}
+      />
+
       <h1 className="font-bold text-3xl text-slate-800">
-        Crowdfunding Projects
+        Decentralized Crowdfunding Projects
       </h1>
       <div className="w-1/3">
-        <ProjectsList />
+        <ProjectsList
+          setSelectedProject={setSelectedProject}
+          setSupportModal={setSupportModal}
+        />
       </div>
     </main>
   );

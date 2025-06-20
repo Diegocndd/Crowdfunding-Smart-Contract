@@ -14,8 +14,6 @@ type ContractContextType = {
 };
 import CrowdfundingManagementABI from "@/ABIs/CrowdfundingManagement.json";
 
-const CONTRACT_ADDRESS = "0x84aDe3C63BA0f64833102C014c4c39a412557c9A";
-
 const ContractContext = createContext<ContractContextType | undefined>(
   undefined
 );
@@ -27,7 +25,7 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const c = new web3.eth.Contract(
       CrowdfundingManagementABI,
-      CONTRACT_ADDRESS
+      process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
     );
     setContract(c);
   }, [web3]);

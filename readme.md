@@ -1,34 +1,57 @@
-# Crowdfunding Smart Contracts
+# 🚀 Decentralized Crowdfunding Platform — Next.js + Solidity
 
-A decentralized crowdfunding system implemented with Ethereum smart contracts written in Solidity.
+This is a decentralized crowdfunding platform built with **Next.js (frontend)** and **Solidity smart contracts (backend)** deployed on the blockchain.
 
-## Description
+The smart contract follows an **All-or-Nothing crowdfunding model**, where funds are only transferred if the project reaches its goal before the deadline. Otherwise, contributors can claim refunds.
 
-This project allows users to create crowdfunding campaigns with customizable goals, deadlines, and reward tiers. Each campaign is an individual smart contract, ensuring transparency, security, and autonomy.
+---
 
-## Features
+## ⚙️ How It Works
 
-- Create crowdfunding projects with name, description, goal, deadline, and reward tiers.
-- Users can contribute with either free donations or fixed reward pledges.
-- Track contributions and campaign balance.
-- Automatic refunds to supporters if the funding goal is not reached by the deadline.
-- Secure contract self-destruction after campaign ends, handling refunds and cleanup.
+### 🔗 Smart Contract
 
-## How to Use
+The contract is located at: `contracts/Management.sol`
 
-1. Deploy the `CrowdfundingManagement` contract.
-2. Create a project via `createProject`, providing parameters like name, description, goal, deadline, and reward tiers.
-3. Support a project by sending Ether to the campaign contract via the `contribute` function.
-4. After the deadline:
-   - If goal is met, funds are released to the owner.
-   - If goal is not met, supporters can claim refunds.
-5. The manager can destroy the contract after campaign completion, processing refunds and clearing state.
+It consists of two main components:
 
-## Notes
+- **CrowdfundingManagement**
 
-- A fixed fee (e.g., 50 wei) is charged for project creation.
-- Contributions can be linked to specific reward tiers with fixed amounts.
+  - Responsible for deploying new crowdfunding campaigns (projects).
+  - Requires a small fee (`50 wei`) to create a project.
+  - Emits an event `ProjectCreated` when a new campaign is created.
+  - Stores all deployed projects in an array.
 
-## License
+- **CrowdfundingProject**
+  - Manages individual campaigns.
+  - Accepts contributions with optional predefined pledges (labels with values) or free donations.
+  - Follows an all-or-nothing rule:
+    - If the goal is met by the deadline, the funds go to the project owner.
+    - If the goal is not met, all contributors are refunded.
+  - Emits:
+    - `ContributionMade` on new donations.
+    - `ProjectCompleted` when the campaign ends (successfully or not).
+    - `Refunded` when users are refunded.
 
-MIT License
+---
+
+## 🌐 Frontend — Next.js dApp
+
+The frontend is a fully decentralized application (dApp) built with Next.js and Ethers.js that allows users to:
+
+- Create new crowdfunding campaigns.
+- Contribute to existing campaigns with either predefined pledge amounts or custom donations.
+- Monitor campaign progress in real-time.
+- Claim refunds or finalize campaigns after deadlines.
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+NEXT_PUBLIC_ALCHEMY_API_KEY=YOUR_ALCHEMY_API_KEY
+NEXT_PUBLIC_CONTRACT_ADDRESS=YOUR_DEPLOYED_MANAGEMENT_CONTRACT_ADDRESS
+```
+
+Alchemy is used as the blockchain infrastructure provider. It allows the frontend to connect to the Ethereum network (or other EVM-compatible networks) through reliable RPC endpoints.
